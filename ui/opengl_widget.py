@@ -54,17 +54,19 @@ class OpenGLWidget(QOpenGLWidget):
     def compile_shaders(self, shader_source, is_3d=False):
         self.is_3d = is_3d
         shader_source = self.clean_shader_code(shader_source)
-        print("Compiling shader with source:\n", shader_source)
+        print("Compiling shader with source:\n", shader_source)  # Debugging print
         try:
             self.shader_program.compile(self.boilerplate_vertex, shader_source)
             self.shader_program.use()
-            self.update_uniforms()
+            self.update_uniforms()  # Update uniforms like resolution and time
             self.shader_compiled.emit(True, "Shader compiled successfully.")
-            self.update()
+            self.update()  # Trigger the OpenGL widget to repaint
             return True, "Shader compiled successfully."
         except RuntimeError as e:
             self.shader_compiled.emit(False, str(e))
             return False, str(e)
+
+
 
     def initialize_geometry(self):
         vertices = np.array([
@@ -88,11 +90,13 @@ class OpenGLWidget(QOpenGLWidget):
         if self.texture_path:
             self.texture = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D, self.texture)
+
             image = QImage(self.texture_path)
             image = image.convertToFormat(QImage.Format_RGBA8888)
             width = image.width()
             height = image.height()
             image_data = image.bits().tobytes()
+
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -114,8 +118,12 @@ class OpenGLWidget(QOpenGLWidget):
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.shader_program.use()
+
         if self.texture:
+            glActiveTexture(GL_TEXTURE0)
             glBindTexture(GL_TEXTURE_2D, self.texture)
+            texture_location = glGetUniformLocation(self.shader_program.program, "texture_sampler_4303718352")
+            glUniform1i(texture_location, 0)  # Bind the uniform to texture unit 0
 
         self.update_uniforms()
 
@@ -136,6 +144,7 @@ class OpenGLWidget(QOpenGLWidget):
         glDisableVertexAttribArray(position_location)
         glDisableVertexAttribArray(texCoord_location)
         glBindTexture(GL_TEXTURE_2D, 0)
+
 
     def clean_shader_code(self, shader_source):
         shader_source = shader_source.strip()

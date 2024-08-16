@@ -9,9 +9,9 @@ class ColorButtonWidget(NodeBaseWidget):
         super(ColorButtonWidget, self).__init__(parent)
         self._name = name
         self._color_button = QPushButton('Pick Color')
-        self._color_button.setStyleSheet('background-color: rgb(128, 128, 128)')  # Initial neutral color
+        self._color_button.setStyleSheet('background-color: rgb(128, 128, 128)')
         self._color_button.clicked.connect(self.open_color_picker)
-        self._color = (128 / 255.0, 128 / 255.0, 128 / 255.0)  # Initial neutral color
+        self._color = (128 / 255.0, 128 / 255.0, 128 / 255.0)
 
         layout = QVBoxLayout()
         if label:
@@ -142,7 +142,7 @@ class SliderWidget(NodeBaseWidget):
         self.value_changed.emit(self._name, self.get_value())
 
     def get_value(self):
-        return self._slider.value() / 100.0  # Normalized value between 0 and 1
+        return self._slider.value() / 100.0
 
     def set_value(self, value):
         self._slider.setValue(int(value * 100))
@@ -268,7 +268,7 @@ class ColorNode(BaseNode):
     def _on_color_changed(self, name, value):
         self.set_property(name, value)
         self.update()
-        self.graph.node_double_clicked.emit(self)  # Emit signal to update the GLSL code
+        self.graph.node_double_clicked.emit(self)
 
 
 
@@ -382,7 +382,7 @@ class BlendNode(BaseNode):
     def _on_property_changed(self, name, value):
         self.set_property(name, value)
         self.update()
-        self.graph.node_double_clicked.emit(self)  # Emit signal to update the GLSL code
+        self.graph.node_double_clicked.emit(self)
 
 class TextureWidget(NodeBaseWidget):
     value_changed = Signal(str, str)
@@ -407,8 +407,23 @@ class TextureWidget(NodeBaseWidget):
         texture_path, _ = file_dialog.getOpenFileName(caption='Select Texture', filter='Image Files (*.png *.jpg *.bmp)')
         if texture_path:
             self._texture_path = texture_path
-            self._texture_button.setText(texture_path.split('/')[-1])  # Display the file name on the button
+            self._texture_button.setText(texture_path.split('/')[-1])
             self.value_changed.emit(self._name, self._texture_path)
+
+    def generate_glsl(self, generated_code, used_vars):
+        node_id = id(self)
+        uv_var = self.get_input_var_name('UV', generated_code, used_vars) or 'vec2(0.0, 0.0)'
+        var_name = f"texture_{node_id}"
+        if var_name in used_vars:
+            return var_name
+        used_vars.add(var_name)
+
+        texture_uniform_name = f"texture_sampler_{node_id}"
+        generated_code.append(f"// Begin Texture Node {node_id} ({self.NODE_NAME})")
+        generated_code.append(f"uniform sampler2D {texture_uniform_name};")
+        generated_code.append(f"vec4 {var_name} = texture2D({texture_uniform_name}, {uv_var});")
+        generated_code.append(f"// End Texture Node {node_id} ({self.NODE_NAME})")
+        return var_name
 
     def get_value(self):
         return self._texture_path
@@ -451,7 +466,7 @@ class TextureNode(BaseNode):
     def _on_property_changed(self, name, value):
         self.set_property(name, value)
         self.update()
-        self.graph.node_double_clicked.emit(self)  # Emit signal to update the GLSL code
+        self.graph.node_double_clicked.emit(self)
 
     def get_input_var_name(self, input_name, generated_code, used_vars):
         input_port = self.get_input(input_name)
@@ -465,6 +480,7 @@ class TextureNode(BaseNode):
         if var_name not in used_vars:
             generated_code.append(f"vec2 {var_name} = vec2(0.0, 0.0);")
         return var_name
+
 
 class UVNode(BaseNode):
     __identifier__ = 'nodes'
@@ -530,81 +546,6 @@ class GradientNode(BaseNode):
         self.gradient = gradient
         self.update()
         self.graph.node_double_clicked.emit(self)
-
-class SineNode(BaseNode):
-    __identifier__ = 'nodes'
-    NODE_NAME = 'Sine'
-
-    def __init__(self):
-        super(SineNode, self).__init__()
-        self.add_input('Value')
-        self.add_output('Output')
-
-    def generate_glsl(self, generated_code, used_vars):
-        node_id = id(self)
-        input_value = self.get_input_var_name('Value', generated_code, used_vars)
-        var_name = f"sine_{node_id}"
-        if var_name in used_vars:
-            return var_name
-        used_vars.add(var_name)
-
-        generated_code.append(f"// Begin Sine Node {node_id} ({self.NODE_NAME})")
-        generated_code.append(f"float {var_name} = sin({input_value});")
-        generated_code.append(f"// End Sine Node {node_id} ({self.NODE_NAME})")
-        return var_name
-
-    def get_input_var_name(self, input_name, generated_code, used_vars):
-        input_port = self.get_input(input_name)
-        if input_port and input_port.connected_ports():
-            connected_port = input_port.connected_ports()[0]
-            connected_node = connected_port.node()
-            if hasattr(connected_node, 'generate_glsl'):
-                var_name = connected_node.generate_glsl(generated_code, used_vars)
-                return var_name
-        # Default value if no input is connected
-        var_name = f"default_{input_name}_{id(self)}"
-        if var_name not in used_vars:
-            generated_code.append(f"float {var_name} = 0.0;")  # You can change the default value if needed
-            used_vars.add(var_name)
-        return var_name
-
-
-class CosineNode(BaseNode):
-    __identifier__ = 'nodes'
-    NODE_NAME = 'Cosine'
-
-    def __init__(self):
-        super(CosineNode, self).__init__()
-        self.add_input('Value')
-        self.add_output('Output')
-
-    def generate_glsl(self, generated_code, used_vars):
-        node_id = id(self)
-        input_value = self.get_input_var_name('Value', generated_code, used_vars)
-        var_name = f"cosine_{node_id}"
-        if var_name in used_vars:
-            return var_name
-        used_vars.add(var_name)
-
-        generated_code.append(f"// Begin Cosine Node {node_id} ({self.NODE_NAME})")
-        generated_code.append(f"float {var_name} = cos({input_value});")
-        generated_code.append(f"// End Cosine Node {node_id} ({self.NODE_NAME})")
-        return var_name
-
-    def get_input_var_name(self, input_name, generated_code, used_vars):
-        input_port = self.get_input(input_name)
-        if input_port and input_port.connected_ports():
-            connected_port = input_port.connected_ports()[0]
-            connected_node = connected_port.node()
-            if hasattr(connected_node, 'generate_glsl'):
-                var_name = connected_node.generate_glsl(generated_code, used_vars)
-                return var_name
-        # Default value if no input is connected
-        var_name = f"default_{input_name}_{id(self)}"
-        if var_name not in used_vars:
-            generated_code.append(f"float {var_name} = 0.0;")  # You can change the default value if needed
-            used_vars.add(var_name)
-        return var_name
 
 class AddNode(BaseNode):
     __identifier__ = 'nodes'
