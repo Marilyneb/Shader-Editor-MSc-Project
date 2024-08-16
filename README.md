@@ -45,3 +45,6 @@ The Interactive Shader Editor is a Python-based application that allows users to
 - **Code Editor Tab**: Write GLSL code directly. Any changes will be reflected in the OpenGL preview.
 - **Compile Button**: Click to compile the current shader and see the results in the OpenGL viewport.
 
+### Loading Default Shaders
+You can load two default example shaders included with the application:
+1. **Load Example Shader**: Navigate to the File menu and select "Load Example Shader" to load a basic blue color shader or 3D scene
