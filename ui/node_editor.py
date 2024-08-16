@@ -86,7 +86,9 @@ class NodeEditorView(QtWidgets.QWidget):
                 var_name = node.generate_glsl(generated_code, used_vars)
                 final_output_var = var_name
 
+        # Construct the final GLSL code
         if final_output_var:
+            # Ensure the final output variable is a vec3 before using it in a vec4 context
             final_code = f"""#version 120
     {self.format_glsl_code(generated_code)}
 
@@ -102,6 +104,7 @@ class NodeEditorView(QtWidgets.QWidget):
     }
     """
 
+        # Output for debugging purposes
         print(f"Generated GLSL code:\n{final_code}")
         return final_code
 
