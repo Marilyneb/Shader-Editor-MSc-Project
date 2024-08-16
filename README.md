@@ -33,3 +33,15 @@ The Interactive Shader Editor is a Python-based application that allows users to
    ```bash
    git clone https://github.com/yourusername/shader-editor.git
    cd shader-editor
+2. Install the required Python packages:
+   ```bash
+   pip install -r requirements.txt
+3. Run the application:
+    ```bash
+    python main_window.py
+## Usage
+
+- **Node Editor Tab**: Create and connect nodes to build a shader visually. Right-click to add new nodes.
+- **Code Editor Tab**: Write GLSL code directly. Any changes will be reflected in the OpenGL preview.
+- **Compile Button**: Click to compile the current shader and see the results in the OpenGL viewport.
+
