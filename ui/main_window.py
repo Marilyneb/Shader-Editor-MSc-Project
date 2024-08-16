@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
         self.node_editor_widget.node_selected.connect(self.update_code_editor)
 
         self.code_editor = CodeEditor()
-        self.code_editor.editor.textChanged.connect(self.compile_shader)
+        self.code_editor.textChanged.connect(self.compile_shader)  # Fix this line
 
         self.opengl_widget.shader_compiled.connect(self.on_shader_compiled)
 
@@ -52,6 +52,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         self.create_menu_bar()
+
 
     def create_menu_bar(self):
         menu_bar = QMenuBar(self)
